@@ -1,13 +1,31 @@
 export type AdSlotStatus = "active" | "paused";
+export type PaymentStatus = "unclaimed" | "reserved" | "paid";
 
 export type AdSlot = {
   id: string;
-  advertiser_id: string;
+  campaign_id: string | null;
+  advertiser_id: string | null;
   code: string;
-  business_name: string;
-  destination_url: string;
+  business_name: string | null;
+  destination_url: string | null;
   slot_type: string;
   status: AdSlotStatus;
+  payment_status: PaymentStatus;
+  stripe_checkout_session_id: string | null;
+  created_at: string;
+};
+
+export type AdSlotWithCampaign = AdSlot & { campaign: { name: string } | null };
+
+export type CampaignStatus = "open" | "closed";
+
+export type Campaign = {
+  id: string;
+  name: string;
+  slug: string;
+  total_slots: number;
+  price_cents: number;
+  status: CampaignStatus;
   created_at: string;
 };
 

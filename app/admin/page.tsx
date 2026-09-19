@@ -4,7 +4,7 @@ import { isAdmin } from "@/lib/admin";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { SiteHeader } from "@/components/SiteHeader";
 import { AdminClient } from "./AdminClient";
-import type { AdSlot } from "@/types/database";
+import type { AdSlot, Campaign } from "@/types/database";
 
 export type AdvertiserOption = {
   id: string;
@@ -21,10 +21,10 @@ export default async function AdminPage() {
   }
 
   const supabase = supabaseAdmin();
-  const { data: adSlotsData } = await supabase
-    .from("ad_slots")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const [{ data: adSlotsData }, { data: campaignsData }] = await Promise.all([
+    supabase.from("ad_slots").select("*").order("created_at", { ascending: false }),
+    supabase.from("campaigns").select("*").order("created_at", { ascending: false }),
+  ]);
 
   const client = await clerkClient();
   const { data: users } = await client.users.getUserList({ limit: 100 });
@@ -36,7 +36,11 @@ export default async function AdminPage() {
   return (
     <>
       <SiteHeader />
-      <AdminClient adSlots={(adSlotsData ?? []) as AdSlot[]} advertisers={advertisers} />
+      <AdminClient
+        adSlots={(adSlotsData ?? []) as AdSlot[]}
+        campaigns={(campaignsData ?? []) as Campaign[]}
+        advertisers={advertisers}
+      />
     </>
   );
 }

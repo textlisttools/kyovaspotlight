@@ -63,7 +63,8 @@ const faqs = [
   },
   {
     question: "How much does a spot cost?",
-    answer: "Pricing depends on the route and slot type — reach out below for current availability.",
+    answer:
+      "See live pricing and availability on the current postcard at /reserve — reserve and pay online, or reach out below if you'd rather talk it through first.",
   },
 ];
 
@@ -142,7 +143,10 @@ export default function HomePage() {
       <section className="cta-banner">
         <div className="cta-banner__inner">
           <h2>Spots fill up fast on every route.</h2>
-          <p>Reach out to check what's available for the next run — no obligation.</p>
+          <p>Reserve a spot online, or reach out with questions first — no obligation.</p>
+          <Link href="/reserve">
+            <button>See available slots &amp; reserve one</button>
+          </Link>
           <div className="cta-banner__contact">
             <a href="mailto:postcard@kyovaspotlight.com">postcard@kyovaspotlight.com</a>
             <a href="tel:+13049623018">304-962-3018</a>
@@ -160,6 +164,12 @@ export default function HomePage() {
             </div>
           ))}
         </div>
+        <iframe
+          className="coverage-map"
+          title="KYOVA Spotlight coverage area — Huntington, WV"
+          src="https://www.google.com/maps?q=Huntington,+WV&output=embed"
+          loading="lazy"
+        />
       </section>
 
       <footer className="site-footer">
@@ -177,6 +187,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="site-footer__links">
+            <Link href="/reserve">Reserve a spot</Link>
             <Link href="/privacy">Privacy policy</Link>
             <Link href="/admin">Admin</Link>
             <SignedOut>

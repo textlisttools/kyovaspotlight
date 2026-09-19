@@ -12,6 +12,7 @@ export function SiteHeader() {
           <Image src="/icon-512.png" alt="KYOVA Spotlight" width={44} height={44} priority />
         </Link>
         <nav className="site-header__nav">
+          <Link href="/reserve">Reserve a spot</Link>
           <SignedIn>
             <Link href="/dashboard">Dashboard</Link>
           </SignedIn>

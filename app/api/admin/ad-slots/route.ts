@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
       destination_url: destinationUrl,
       slot_type: slotType,
       status: "active",
+      payment_status: "paid",
     })
     .select("*")
     .single();

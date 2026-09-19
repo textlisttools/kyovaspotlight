@@ -122,10 +122,14 @@ app/
   r/[code]/OfferForm.tsx      The name/email form shown there, before forwarding on
   api/leads/route.ts          Lead capture, called from OfferForm
   api/push/subscribe/route.ts  Saves a push subscription for the signed-in advertiser
-  api/admin/ad-slots/route.ts  Creates an ad_slots row, admin-only
+  api/admin/ad-slots/route.ts  Creates one ad_slots row directly, admin-only
+  api/admin/campaigns/route.ts  Creates a campaign + bulk-generates its ad_slots, admin-only
+  api/reserve/route.ts        Claims a slot + creates a Stripe Checkout session
+  api/webhooks/stripe/route.ts  Confirms/releases a reservation on Stripe's callback
+  reserve/                    Public self-serve slot reservation + payment (see below)
   code-not-found/page.tsx    Shown when a code doesn't match an active ad slot
-  dashboard/                 Advertiser dashboard (protected by middleware.ts)
-  admin/                     Create ad slots + download QR codes (admin-only, see below)
+  dashboard/                 Advertiser dashboard, slots grouped by campaign (protected by middleware.ts)
+  admin/                     Create campaigns/ad slots + download QR codes (admin-only, see below)
   privacy/page.tsx           Renders docs/privacy-policy.md
 components/
   EnableNotificationsButton.tsx  Registers the service worker + push subscription
@@ -133,32 +137,63 @@ lib/
   supabase-server.ts          Service-role client (server-only)
   supabase-clerk.ts           RLS-scoped client for the dashboard
   push.ts                     notifyAdvertiser() — sends web push, prunes stale subscriptions
+  stripe.ts                   Lazy-initialized Stripe client (see the note in the file on why)
   ip-hash.ts / device.ts / geo.ts   Scan-logging helpers
   admin.ts                    isAdmin() — the ADMIN_USER_IDS allowlist check
 public/sw.js                  Service worker (push + notification click handling)
-supabase/schema.sql           Tables + RLS policies
+supabase/schema.sql           Tables + RLS policies (fresh installs)
+supabase/migrations/          Numbered SQL files to run against an existing database, in order
 docs/privacy-policy.md        Source of truth for app/privacy/page.tsx
 ```
 
-## Admin: creating ad slots
+## Admin: campaigns and ad slots
 
-Go to `/admin` (signed in as a Clerk user listed in `ADMIN_USER_IDS`).
-Pick the advertiser from the dropdown (pulled live from Clerk's user
-list), fill in the business name, a URL-safe `code`, and their
-destination URL, and submit — that's one `ad_slots` row, i.e. one QR
-code. Each row gets a "Download" button that generates a PNG QR code
-encoding `https://<your-domain>/r/<code>`, ready to hand to a printer.
+There are two ways an `ad_slots` row gets created:
 
-An advertiser can have multiple ad slots (multiple postcard runs,
-multiple locations) — just create another row with a different `code`
-for the same advertiser; the dashboard already groups scans/leads per
-slot.
+**Direct** (phone/in-person deals) — go to `/admin`, pick the advertiser
+from the dropdown (pulled live from Clerk's user list), fill in the
+business name, a URL-safe `code`, and their destination URL, submit. One
+row, immediately `payment_status: "paid"`.
 
-`/admin` and `/api/admin/*` are gated two ways: `middleware.ts` requires
-any signed-in session, and the page/route themselves additionally check
-`isAdmin()` — being signed in isn't enough on its own, only Clerk user ids
-listed in `ADMIN_USER_IDS` get in. Anyone else hitting `/admin` is bounced
-to `/dashboard`.
+**Self-serve, via a campaign** — also from `/admin`, create a campaign
+(name, a short `slug` used in generated QR codes, total slot count, price
+per slot). That single action bulk-creates all of that campaign's
+`ad_slots` rows at once — empty, `payment_status: "unclaimed"`, codes like
+`<slug>-01` through `<slug>-NN`. Advertisers then claim and pay for one
+themselves at `/reserve` (Stripe Checkout); the webhook flips a slot to
+`paid` once payment actually completes, or releases it back to
+`unclaimed` if the Checkout session expires unpaid. Only one campaign
+should be `status: "open"` at a time — `/reserve` shows whichever open
+campaign was created most recently.
+
+Either way, every `ad_slots` row gets a "Download" button on `/admin`
+that generates a PNG QR code encoding `https://<your-domain>/r/<code>`,
+ready to hand to a printer — this works the same regardless of which flow
+created the row.
+
+`/admin`, `/api/admin/*`, and `/api/reserve` are all gated by
+`middleware.ts` requiring a signed-in session; `/admin` and
+`/api/admin/*` additionally check `isAdmin()` in the page/route itself —
+being signed in isn't enough on its own, only Clerk user ids listed in
+`ADMIN_USER_IDS` get in. `/api/webhooks/stripe` is deliberately **not**
+in that protected list — Stripe calls it directly with no Clerk session
+at all, and its own signature check (`STRIPE_WEBHOOK_SECRET`) is what
+authenticates it instead.
+
+### Setting up Stripe
+
+1. Stripe dashboard → **Developers → API keys** → copy the (test-mode,
+   to start) secret key into `STRIPE_SECRET_KEY`.
+2. Deploy this app so `/api/webhooks/stripe` actually exists at a public
+   URL.
+3. Stripe dashboard → **Developers → Webhooks** → add an endpoint at
+   `https://<your-domain>/api/webhooks/stripe`, listening for
+   `checkout.session.completed` and `checkout.session.expired`.
+4. Copy the signing secret Stripe gives you into `STRIPE_WEBHOOK_SECRET`,
+   redeploy.
+5. Test the whole flow with Stripe's test card (`4242 4242 4242 4242`,
+   any future expiry/CVC) before switching `STRIPE_SECRET_KEY` to a live
+   key.
 
 ## Local development
 
@@ -170,11 +205,18 @@ npm run dev
 
 ## Status
 
-Technically complete and live at kyovaspotlight.com. The sales pipeline
-tracking itself (contact info, pricing, follow-up dates) lives outside
-this repo, in the advertiser tracker spreadsheet — `/admin` only handles
-the technical side, creating the `ad_slots` row and its QR code once a
-deal is closed.
+Technically complete and live at kyovaspotlight.com, including self-serve
+slot reservation and payment. Deals closed off-platform (phone/in-person)
+still go through `/admin`'s direct-create flow — the sales pipeline
+tracking for those (contact info, follow-up dates) lives outside this
+repo, in the advertiser tracker spreadsheet.
+
+Needs doing before `/reserve` can actually take a payment:
+- Run `supabase/migrations/0001_campaigns_and_reservations.sql` against
+  the live database (see "Row Level Security" above for where).
+- Set `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` — see "Setting up
+  Stripe" above.
+- Create the first campaign from `/admin`.
 
 Optional, not blocking:
 - Clerk is still on dev/test keys, which work fine on the custom domain

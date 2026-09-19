@@ -1,7 +1,7 @@
 import { supabaseForAdvertiser } from "@/lib/supabase-clerk";
 import { SiteHeader } from "@/components/SiteHeader";
 import { DashboardClient } from "./DashboardClient";
-import type { AdSlot, Lead, Scan } from "@/types/database";
+import type { AdSlotWithCampaign, Lead, Scan } from "@/types/database";
 
 // Server component: reads through the advertiser's own Clerk-scoped
 // Supabase client, so RLS (supabase/schema.sql) guarantees this only ever
@@ -12,10 +12,10 @@ export default async function DashboardPage() {
 
   const { data: adSlotsData } = await supabase
     .from("ad_slots")
-    .select("*")
+    .select("*, campaign:campaigns(name)")
     .order("created_at", { ascending: false });
 
-  const adSlots = (adSlotsData ?? []) as AdSlot[];
+  const adSlots = (adSlotsData ?? []) as AdSlotWithCampaign[];
   const adSlotIds = adSlots.map((slot) => slot.id);
 
   const [scansResult, leadsResult] = adSlotIds.length

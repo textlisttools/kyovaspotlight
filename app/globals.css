@@ -304,6 +304,16 @@ button:disabled {
   margin-bottom: 1.5rem;
 }
 
+.cta-banner button {
+  background: white;
+  color: var(--accent);
+  margin-bottom: 1.5rem;
+}
+
+.cta-banner button:hover:not(:disabled) {
+  background: var(--panel);
+}
+
 .cta-banner__contact {
   display: flex;
   justify-content: center;
@@ -515,6 +525,17 @@ button:disabled {
   color: var(--navy);
 }
 
+.ad-slot-group {
+  margin-top: 2rem;
+}
+
+.ad-slot-group__title {
+  color: var(--navy);
+  font-size: 1.1rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.5rem;
+}
+
 .ad-slot-card {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -523,9 +544,10 @@ button:disabled {
   margin-top: 1.25rem;
 }
 
-.ad-slot-card h2 {
+.ad-slot-card h3 {
   color: var(--navy);
   font-size: 1.25rem;
+  margin: 0 0 0.5rem;
 }
 
 .ad-slot-card__meta {
@@ -621,6 +643,12 @@ button:disabled {
 .admin-table {
   width: 100%;
   border-collapse: collapse;
+  margin-bottom: 3rem;
+}
+
+.admin__hint {
+  color: var(--muted);
+  margin-top: -0.75rem;
 }
 
 .admin-table th,
@@ -673,4 +701,104 @@ button:disabled {
   border: none;
   border-top: 1px solid var(--border);
   margin: 2rem 0 1rem;
+}
+
+/* Reserve a slot */
+.reserve {
+  max-width: 900px;
+}
+
+.reserve__header h1 {
+  color: var(--navy);
+}
+
+.reserve__header p {
+  color: var(--muted);
+  margin-bottom: 2rem;
+}
+
+.reserve__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1rem;
+}
+
+.reserve__slot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: flex-start;
+  text-align: left;
+  padding: 1rem;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+  background: var(--paper);
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.reserve__slot:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.reserve__slot--unclaimed {
+  border-color: var(--accent);
+}
+
+.reserve__slot--selected {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.reserve__slot--reserved {
+  border-color: var(--gold);
+  background: #fff8e8;
+}
+
+.reserve__slot--paid {
+  border-color: var(--border);
+  background: var(--panel);
+}
+
+.reserve__slot-code {
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.95rem;
+}
+
+.reserve__slot-status {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+
+.reserve__slot--unclaimed .reserve__slot-status {
+  color: var(--accent);
+}
+
+.reserve__slot-price {
+  font-size: 1.1rem;
+  color: var(--navy);
+}
+
+.reserve__form-panel {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  max-width: 420px;
+}
+
+/* Coverage map */
+.coverage-map {
+  width: 100%;
+  height: 320px;
+  border: 0;
+  border-radius: var(--radius);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+  margin-top: 1.5rem;
 }
